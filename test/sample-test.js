@@ -1,9 +1,7 @@
 const { expect } = require("chai");
 const { ethers, network } = require("hardhat");
 const { BigNumber } = require("ethers");
-function expandTo18Decimals(n) {
-    return BigNumber.from(n).mul(BigNumber.from(10).pow(18));
-  }
+
   function convert(number) {
     return ethers.BigNumber.from(number).toNumber();
     
@@ -37,8 +35,8 @@ describe("Testing", () => {
         liquidityToken = await LiquidityToken.deploy();
         liquidityToken.deployed();
 
-        await tokenA.mintToken(owner.address,10000);
-        await tokenB.mintToken(owner.address,10000)
+        await tokenA.mintToken(signer1.address,10000);
+        await tokenB.mintToken(signer1.address,10000)
 
         // await factory.createPair(tokenA.address, tokenB.address);
 
@@ -157,12 +155,19 @@ describe("Testing", () => {
 })
 describe("removeLiquidity Testing",()=>{
     it("removing all liquidity",async()=>{
-        await tokenA.approve(router.address,10000);
-        await tokenB.approve(router.address,10000);
+        await tokenA.connect(signer1).approve(router.address,10000);
+        await tokenB.connect(signer1).approve(router.address,10000);
 
-        await router.addLiquidity(tokenA.address,tokenB.address,10000,10000,0,0,owner.address,1659666362);
+        const userTokenBalanceA = await tokenA.balanceOf(signer1.address);
+        const userTokenBalanceB = await tokenB.balanceOf(signer1.address); 
 
-        pairAddress = await factory.getPair(tokenA.address,tokenB.address);
+        console.log(`user balance  after removing liquidity tokenA and tokenB balance  ${convert(userTokenBalanceA)}, ${convert(userTokenBalanceB)}`)
+
+
+
+        await router.connect(signer1).addLiquidity(tokenA.address,tokenB.address,10000,10000,0,0,owner.address,1659666362);
+
+        pairAddress = await factory.connect(signer1).getPair(tokenA.address,tokenB.address);
 
         _pair = await pair.attach(pairAddress);
 
@@ -174,6 +179,10 @@ describe("removeLiquidity Testing",()=>{
         const liquidity_old = await _pair.balanceOf(owner.address);
         const tokenABalance_old = await tokenA.balanceOf(_pair.address);
         const tokenBBalance_old = await tokenB.balanceOf(_pair.address);
+        const userTokenBalanceA_old = await tokenA.balanceOf(signer1.address);
+        const userTokenBalanceB_old = await tokenB.balanceOf(signer1.address); 
+        console.log(`user balance after adding liquidity tokenA and tokenB balance  ${convert(userTokenBalanceA_old)}, ${convert(userTokenBalanceB_old)}`)
+
         console.log(`tokenA and tokenB balance in the pool before removing liquidity are ${convert(tokenABalance_old)},${convert(tokenBBalance_old)}`)
 
         console.log(`the new reserve0 and reserve1 of the pool are  ${convert(reserve0_old)} ,${convert(reserve1_old)} `);
@@ -182,29 +191,86 @@ describe("removeLiquidity Testing",()=>{
 
         await _pair.approve(router.address,10000);
 
-        await router.removeLiquidity(tokenA.address,tokenB.address,convert(liquidity_old),9000,9000,owner.address,1659666362);
+        await router.removeLiquidity(tokenA.address,tokenB.address,convert(liquidity_old),9000,9000,signer1.address,1659666362);
         
         _pair1 = await pair.attach(pairAddress);
         getReserves_new  = await _pair1.getReserves();
 
         reserve0_new = await getReserves_new._reserve0;
         reserve1_new = await getReserves_new._reserve1;
+        
 
 
         const liquidity_new = await _pair.balanceOf(owner.address);
         const tokenABalance_new = await tokenA.balanceOf(_pair1.address);
         const tokenBBalance_new = await tokenB.balanceOf(_pair1.address);
+        const userTokenBalanceA_new = await tokenA.balanceOf(signer1.address);
+        const userTokenBalanceB_new = await tokenB.balanceOf(signer1.address); 
+        console.log(`the new reserve0 and reserve1 of the pool are  ${convert(reserve0_new)} ,${convert(reserve1_new)} `);
+
+        console.log(`user balance  after removing liquidity tokenA and tokenB balance  ${convert(userTokenBalanceA_new)}, ${convert(userTokenBalanceB_new)}`)
 
 
+     
         console.log(`----------------------------------------tokenA and tokenB balance in the pool after removing liquidity are ${convert(tokenABalance_new)},${convert(tokenBBalance_new)}`)
-        console.log(`=>  owner tokenA and tokenB balance in the pool after removing liquidity are ${convert(tokenABalance_new)},${convert(tokenBBalance_new)}`)
+        
         console.log(`=> ${convert(liquidity_new)} are the liquidity tokens after removing liquidity`);
 
         expect(liquidity_new).to.equal(0);
+        expect(userTokenBalanceA_new).to.equal(9000);
+        expect(userTokenBalanceB_new).to.be.equal(9000);
+
         // expect(liquidity_new).to.be.lessThan(liquidity_old);
 
  })
  it("only removing some liquidity tokens",async ()=>{
+    await tokenA.approve(router.address,10000);
+    await tokenB.approve(router.address,10000);
+    
+    await router.addLiquidity(tokenA.address,tokenB.address,10000,10000,1,1,owner.address,1659666362);
+
+    pairAddress = await factory.getPair(tokenA.address,tokenB.address);
+
+    _pair = await pair.attach(pairAddress);
+    getReserves = await _pair.getReserves();
+
+    reserve0_old = await getReserves._reserve0;
+    reserve1_old = await getReserves._reserve1;
+
+    liquidityToken = await _pair.balanceOf(owner.address);
+
+    console.log("old liquidity",convert(liquidityToken));
+
+    await _pair.approve(router.address,10000);
+
+    userBalanceTOkenA_old = await tokenA.balanceOf(signer1.address);
+    userBalanceTOkenB_old = await tokenB.balanceOf(signer1.address);
+    console.log(`the old reserve0 and reserve1 of the pool are  ${convert(reserve0_old)} ,${convert(reserve1_old)} `);
+
+    console.log("balance of user befor removing liquidity",convert(userBalanceTOkenA_old),"----",convert(userBalanceTOkenB_old));
+    await router.removeLiquidity(tokenA.address,tokenB.address,10,1,1,signer1.address,1659666362);
+
+    _pair1 = await pair.attach(pairAddress);
+    getReserves_new  = await _pair1.getReserves();
+
+    reserve0_new = await getReserves_new._reserve0;
+    reserve1_new = await getReserves_new._reserve1;
+
+    liquidityToken_new = await _pair1.balanceOf(owner.address);
+    userBalanceTOkenA_new = await tokenA.balanceOf(signer1.address);
+    userBalanceTOkenB_new = await tokenB.balanceOf(signer1.address);
+    console.log(`the new reserve0 and reserve1 of the pool are  ${convert(reserve0_new)} ,${convert(reserve1_new)} `);
+
+    console.log("balance of user befor removing liquidity",convert(userBalanceTOkenA_new),"----",convert(userBalanceTOkenB_new));
+  
+
+    console.log("the new liquidity",convert(liquidityToken_new));
+    expect(userBalanceTOkenA_old).to.lessThan(userBalanceTOkenA_new);
+    // expect(userBalanceTOkenB_old).to.lessThan(userBalanceTOkenB_new);
+    // expect(liquidityToken).to.lessThan(liquidityToken_new );
+
+
+   
     
  })
  it("checking rejections ",async ()=>{
@@ -229,6 +295,9 @@ describe("removeLiquidity Testing",()=>{
         expect( router.removeLiquidity(tokenA.address,tokenB.address,convert(liquidity_old),9001,9000,owner.address,1659666362)).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_A_AMOUNT");
         expect( router.removeLiquidity(tokenA.address,tokenB.address,convert(liquidity_old),9000,9001,owner.address,1659666362)).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_B_AMOUNT");
    
+ })
+ it("remove liquidity with ETH",async ()=>{
+    
  })
  
 
