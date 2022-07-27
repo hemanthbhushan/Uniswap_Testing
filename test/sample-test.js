@@ -433,17 +433,93 @@ describe("removeLiquidity Testing",()=>{
     data = {value : transferAmount};
     
     await router.addLiquidityETH(tokenA.address,10000,1,1,owner.address,1659666362,data);
+    pairAddress = await factory.getPair(tokenA.address,wETH.address);
+
+    _pair = await pair.attach(pairAddress);
+    getReserves = await _pair.getReserves();
+    reserve0_ethold  = await  getReserves._reserve0;
+    reserve1_ethold = await getReserves._reserve1;
+    console.log("reserv0,reserve1",Number(reserve0_ethold),Number(reserve1_ethold));
+
     transferAmount = ethers.utils.parseEther("10");
     data = {value : transferAmount};
+
     router.swapExactETHForTokens(1,[wETH.address,tokenA.address],signer1.address,1659666362,data);
+
     _pair = await pair.attach(pairAddress);
+    getReserves = await _pair.getReserves();
+    reserve0_eth  = await  getReserves._reserve0;
+    reserve1_eth = await getReserves._reserve1;
+    console.log("reserv0,reserve1",Number(reserve0_eth),Number(reserve1_eth));
+})
+it("swap Tokens For Exact ETH ",async ()=>{
+  await tokenA.approve(router.address,100000);
+  transferAmount = ethers.utils.parseEther("0.0001");
+  data = {value : transferAmount};
 
- 
+  await router.addLiquidityETH(tokenA.address,15,0,0,owner.address,1659666362,data);
+  pairAddress = await factory.getPair(tokenA.address,wETH.address);
+  _pair = await pair.attach(pairAddress);
+  getReserves = await _pair.getReserves();
+  reserve0 = await getReserves._reserve0;
+  reserve1 = await getReserves._reserve1;
+  console.log("reserv0,reserve1",Number(reserve0),Number(reserve1));
 
-    // console.log(`reserves before swap reserve0 and reserve1  ${Number(reserve0c)},  ${Number(reserve1c)}`);
-  })
- })
+  router.swapTokensForExactETH(10000000,10,[tokenA.address,wETH.address],signer1.address,1659666362);
+  _pair = await pair.attach(pairAddress);
+  getReserves = await _pair.getReserves();
+  reserve0_new = await getReserves._reserve0;
+  reserve1_new = await getReserves._reserve1;
+  console.log("reserv0_new ,reserve1_new",Number(reserve0_new),Number(reserve1_new));
+})
+it("swap Exact Tokens For ETH",async ()=>{
+  await tokenA.approve(router.address,100000);
+  transferAmount = ethers.utils.parseEther("1");
+  data = {value : transferAmount};
+
+  await router.addLiquidityETH(tokenA.address,15,0,0,owner.address,1659666362,data);
+  pairAddress = await factory.getPair(tokenA.address,wETH.address);
+  _pair = await pair.attach(pairAddress);
+  getReserves = await _pair.getReserves();
+  reserve0 = await getReserves._reserve0;
+  reserve1 = await getReserves._reserve1;
+  console.log("reserv0,reserve1",Number(reserve0),Number(reserve1));
+
+  router.swapExactTokensForETH(2,100000000,[tokenA.address,wETH.address],signer1.address,1659666362)
+  _pair = await pair.attach(pairAddress);
+  getReserves = await _pair.getReserves();
+  reserve0_new = await getReserves._reserve0;
+  reserve1_new = await getReserves._reserve1;
+  console.log("reserv0,reserve1",Number(reserve0_new),Number(reserve1_new));
+
+
+})
+it("swap ETH for exact Tokens",async ()=>{
+  await tokenA.approve(router.address,100000);
+  transferAmount = ethers.utils.parseEther("1");
+  data = {value : transferAmount};
+
+  await router.addLiquidityETH(tokenA.address,15,0,0,owner.address,1659666362,data);
+  pairAddress = await factory.getPair(tokenA.address,wETH.address);
+  _pair = await pair.attach(pairAddress);
+  getReserves = await _pair.getReserves();
+  reserve0 = await getReserves._reserve0;
+  reserve1 = await getReserves._reserve1;
+  console.log("reserv0,reserve1",Number(reserve0),Number(reserve1));
+
+  transferAmount = ethers.utils.parseEther("0.9");
+  data = {value : transferAmount};
+
+  router.swapETHForExactTokens(1,[wETH.address,tokenA.address],signer1.address,1659666362,data)
+  _pair = await pair.attach(pairAddress);
+  getReserves = await _pair.getReserves();
+  reserve0_new = await getReserves._reserve0;
+  reserve1_new = await getReserves._reserve1;
+  console.log("reserv0,reserve1",Number(reserve0_new),Number(reserve1_new));
+
+
+})
 })
 
 
-
+})
