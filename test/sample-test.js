@@ -150,8 +150,7 @@ describe("Testing", () => {
     
  it("testing for addliquidity using eth",async ()=>{
     await tokenA.approve(router.address,10000);
-    await wETH.approve(router.address,100);
-        transferAmount = ethers.utils.parseEther('0.1');
+        transferAmount = ethers.utils.parseEther('10');
         data = {value : transferAmount};
 
     
@@ -168,8 +167,8 @@ describe("Testing", () => {
          console.log("reserve 1",Number(reserve1));
 
 
-         //resvisit
-         expect(reserve0).to.be.equal(ethers.utils.parseUnits("1", 17));
+         //resvisit 
+         expect(reserve0).to.be.equal(ethers.utils.parseUnits("1", 19));
          expect(reserve1).to.equal(10);
  })
 })
@@ -427,6 +426,21 @@ describe("removeLiquidity Testing",()=>{
     console.log("token balance of A ",Number(balanceOfUserA),"token balance of B ",Number(balanceOfUserB));
     console.log(`the new reserveA and reserveB of the pool are  ${convert(reserve0_A)} ,${convert(reserve1_B)} `);
    
+  })
+  it("swapping Exact ETH for tokens",async()=>{
+    await tokenA.approve(router.address,10000);
+    transferAmount = ethers.utils.parseEther("100");
+    data = {value : transferAmount};
+    
+    await router.addLiquidityETH(tokenA.address,10000,1,1,owner.address,1659666362,data);
+    transferAmount = ethers.utils.parseEther("10");
+    data = {value : transferAmount};
+    router.swapExactETHForTokens(1,[wETH.address,tokenA.address],signer1.address,1659666362,data);
+    _pair = await pair.attach(pairAddress);
+
+ 
+
+    // console.log(`reserves before swap reserve0 and reserve1  ${Number(reserve0c)},  ${Number(reserve1c)}`);
   })
  })
 })
