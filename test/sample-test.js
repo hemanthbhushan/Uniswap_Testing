@@ -15,12 +15,14 @@ describe("Testing", () => {
     let owner, factory, router, tokenA, tokenB, wETH,Pair,pair,liquidityToken;
 
     beforeEach(async () => {
-        [owner,signer1] = await ethers.getSigners();
+        [owner,signer1,signer2] = await ethers.getSigners();
         amountA = 10000;
         amountB = 10000;
 
         const TokenA = await ethers.getContractFactory("TokenA");
         const TokenB = await ethers.getContractFactory("TokenB");
+        const TokenC = await ethers.getContractFactory("TokenC");
+        const TokenD = await ethers.getContractFactory("TokenD");
         const WETH = await ethers.getContractFactory("WETH");
         const Factory = await ethers.getContractFactory("UniswapV2Factory");
         Pair = await ethers.getContractFactory("UniswapV2Pair");
@@ -32,15 +34,21 @@ describe("Testing", () => {
         await tokenA.deployed();
         tokenB = await TokenB.deploy();
         await tokenB.deployed();
+
+        tokenC = await TokenC.deploy();
+        await tokenC.deployed();
+        tokenD = await TokenD.deploy();
+        await tokenD.deployed();
         wETH = await WETH.deploy();
         await wETH.deployed();
+
         pair = await Pair.deploy();
         await pair.deployed();
         liquidityToken = await LiquidityToken.deploy();
         liquidityToken.deployed();
 
         await tokenA.mintToken(signer1.address,10000);
-        await tokenB.mintToken(signer1.address,10000)
+        await tokenB.mintToken(signer1.address,10000);
 
         // await factory.createPair(tokenA.address, tokenB.address);
 
@@ -161,8 +169,8 @@ describe("Testing", () => {
 
 
          //resvisit
-         expect(reserve0).to.be.equal(10);
-         expect(reserve1).to.equal(ethers.utils.parseUnits("1", 17));
+         expect(reserve0).to.be.equal(ethers.utils.parseUnits("1", 17));
+         expect(reserve1).to.equal(10);
  })
 })
 describe("removeLiquidity Testing",()=>{
@@ -310,12 +318,13 @@ describe("removeLiquidity Testing",()=>{
  })
  it("remove liquidity with ETH",async ()=>{
 
-    await tokenA.approve(router.address,10000);
-    await wETH.approve(router.address,10);
-    transferAmount = ethers.utils.parseEther('0.1');
+    await tokenA.approve(router.address,100000);
+    await wETH.approve(router.address,10000000);
+    transferAmount = ethers.utils.parseEther('10');
     data = {value : transferAmount};
+    
 
-    await router.addLiquidityETH(tokenA.address,10,0,0,owner.address,1659666362,data);
+    await router.addLiquidityETH(tokenA.address,100000,0,0,owner.address,1659666362,data);
 
     pairAddress = await await factory.getPair(tokenA.address,wETH.address);
 
@@ -348,14 +357,77 @@ describe("removeLiquidity Testing",()=>{
 
     console.log(`balanceOfUserA${Number(balanceOfUserA)}, balanceOfUserB is ${Number(balanceOfUserB)}`);
 
-
-    
-
-
-    
  })
- 
+ })
+ describe("Testing on Swap",()=>{
+  it("swapExactTokensForTokens",async ()=>{
+    await tokenA.approve(router.address,20000);
+    await tokenB.approve(router.address,20000);
+   
+    
+    await router.addLiquidity(tokenA.address,tokenB.address,12000,10000,1,1,owner.address,1659666362);
+    
+    pairAddress = await factory.getPair(tokenA.address,tokenB.address);
+    
+    _pair = await pair.attach(pairAddress);
 
+    getReserves = await _pair.getReserves();
+
+    reserve0_old = await getReserves._reserve0;
+    reserve1_old = await getReserves._reserve1;
+    
+    console.log(`the old reserve0 and reserve1 of the pool are  ${convert(reserve0_old)} ,${convert(reserve1_old)} `);
+  //tokens order gts sorted depending of there address
+    router.swapExactTokensForTokens(1000,0,[tokenA.address,tokenB.address],signer2.address,1659666362);
+    getReserves = await _pair.getReserves();
+
+    reserve0_A = await getReserves._reserve0;
+    reserve1_B = await getReserves._reserve1;
+
+    balanceOfUserA = await tokenA.balanceOf(signer2.address);
+    balanceOfUserB = await tokenB.balanceOf(signer2.address);
+
+    console.log("token balance of A ",Number(balanceOfUserA),"token balance of B ",Number(balanceOfUserB));
+    console.log(`the new reserveA and reserveB of the pool are  ${convert(reserve0_A)} ,${convert(reserve1_B)} `);
+    router.swapExactTokensForTokens(1000,0,[tokenB.address,tokenA.address],signer2.address,1659666362);
+    getReserves = await _pair.getReserves();
+    reserve0_A = await getReserves._reserve0;
+    reserve1_B = await getReserves._reserve1;
+    console.log(`the new reserveA and reserveB of the pool are  ${convert(reserve0_A)} ,${convert(reserve1_B)} `);
+    
+  })
+  it("test for swapTokensForExactTokens",async ()=>{
+
+    await tokenA.approve(router.address,20000);
+    await tokenB.approve(router.address,20000);
+   
+    
+    await router.addLiquidity(tokenA.address,tokenB.address,10000,12000,1,1,owner.address,1659666362);
+    
+    pairAddress = await factory.getPair(tokenA.address,tokenB.address);
+    
+    _pair = await pair.attach(pairAddress);
+
+    getReserves = await _pair.getReserves();
+
+    reserve0_old = await getReserves._reserve0;
+    reserve1_old = await getReserves._reserve1;
+    
+    console.log(`the old reserve0 and reserve1 of the pool are  ${convert(reserve0_old)} ,${convert(reserve1_old)} `);
+  //tokens order gts sorted depending of there address
+    router.swapTokensForExactTokens(5,10,[tokenB.address,tokenA.address],signer2.address,1659666362);
+    getReserves = await _pair.getReserves();
+
+    reserve0_A = await getReserves._reserve0;
+    reserve1_B = await getReserves._reserve1;
+
+    balanceOfUserA = await tokenA.balanceOf(signer2.address);
+    balanceOfUserB = await tokenB.balanceOf(signer2.address);
+
+    console.log("token balance of A ",Number(balanceOfUserA),"token balance of B ",Number(balanceOfUserB));
+    console.log(`the new reserveA and reserveB of the pool are  ${convert(reserve0_A)} ,${convert(reserve1_B)} `);
+   
+  })
  })
 })
 
