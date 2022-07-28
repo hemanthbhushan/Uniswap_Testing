@@ -3,6 +3,7 @@ const { expect } = require("chai");
 const { ethers, network } = require("hardhat");
 const { BigNumber } = require("ethers");
 
+
   function convert(number) {
     return ethers.BigNumber.from(number).toNumber();
     
@@ -343,6 +344,7 @@ describe("removeLiquidity Testing",()=>{
     // console.log(`--=========balanceOfUserA${Number(balanceOfUserA)}, balanceOfUserB is ${Number(balanceOfUserB)}`);
 
  })
+
  })
  describe("Testing on Swap",()=>{
   it("swapExactTokensForTokens",async ()=>{
@@ -505,6 +507,39 @@ it("swap ETH for exact Tokens",async ()=>{
 
 
 })
+})
+describe("swapping tokens extended",()=>{
+  it("swap Exact Tokens For Tokens Supporting Fee On Transfer Tokens",async()=>{
+    await tokenA.approve(router.address,10000);
+    await tokenA.approve(router.address,10000);
+   
+    
+    await router.addLiquidity(tokenA.address,tokenB.address,10000,10000,1,1,owner.address,1659666362);
+    
+    pairAddress = await factory.getPair(tokenA.address,tokenB.address);
+    
+    _pair = await pair.attach(pairAddress);
+
+    getReserves = await _pair.getReserves();
+
+    reserve0_old = await getReserves._reserve0;
+    reserve1_old = await getReserves._reserve1;
+    
+    console.log(`the old reserve0 and reserve1 of the pool are  ${convert(reserve0_old)} ,${convert(reserve1_old)} `);
+   
+    router.swapExactTokensForTokensSupportingFeeOnTransferTokens(1000,11,[tokenA.address,tokenB.address],signer1.address,1659666362);
+    _pair = await pair.attach(pairAddress);
+
+    getReserves = await _pair.getReserves();
+     balanceOf = await tokenA.balanceOf(signer1.address);
+     console.log("user token A balance",Number(balanceOf));
+
+    reserve0_new = await getReserves._reserve0;
+    reserve1_new = await getReserves._reserve1;
+    
+    console.log(`the new reserve0 and reserve1 of the pool are  ${convert(reserve0_new)} ,${convert(reserve1_new)} `);
+  }
+  )
 })
 
 
