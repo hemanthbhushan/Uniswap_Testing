@@ -50,7 +50,7 @@ describe("Testing", () => {
         await tokenA.mintToken(signer1.address,10000);
         await tokenB.mintToken(signer1.address,10000);
 
-        // await factory.createPair(tokenA.address, tokenB.address);
+       
 
         const Router = await ethers.getContractFactory("UniswapV2Router02");
         router = await Router.deploy(factory.address, wETH.address);
@@ -59,24 +59,24 @@ describe("Testing", () => {
         await tokenA.approve(router.address, amountA);
         await tokenB.approve(router.address, amountB);
     });
-    // it("check",async()=>{
-    //     await factory.createPair(tokenA.address,tokenB.address);
-    //     const pairAddress = await factory.getPair(tokenA.address,tokenB.address);
+    it("check",async()=>{
+        await factory.createPair(tokenA.address,tokenB.address);
+        const pairAddress = await factory.getPair(tokenA.address,tokenB.address);
 
-    //     console.log("pair address",pairAddress);
+        console.log("pair address",pairAddress);
 
-    //     pair = await Pair.attach(pairAddress);
+        _pair = await pair.attach(pairAddress);
 
-    //     const pairToken0 = await pair.token0();
-    //     const pairToken1 = await pair.token1();
+        const pairToken0 = await _pair.token0();
+        const pairToken1 = await _pair.token1();
 
-    //     expect(pairToken0).to.equal(tokenA.address);
-    //     expect(pairToken1).to.equal(tokenB.address);
+        expect(pairToken0).to.equal(tokenB.address);
+        expect(pairToken1).to.equal(tokenA.address);
 
-    //     const length = await factory.allPairsLength();
-    //     expect(length).to.equal(1);
+        const length = await factory.allPairsLength();
+        expect(length).to.equal(1);
     
-    //   })
+      })
     describe("addLiquidity testing",()=>{
 
     it("Testing", async () => {
@@ -97,20 +97,7 @@ describe("Testing", () => {
 
         reserve0 = await getReserves._reserve0;
         reserve1 = await getReserves._reserve1;
-
-        // balanceA = await tokenA.balanceOf(pairAddress);
-        // console.log(balanceA);
-        // expect(routerr).to.equal(9000);
-
-        // balance = await liquidityToken.balanceOf(signer1.address);
-        // expect(balance).to.equal(9000);
-        
-
-        // token0 = await pair.token0();
-        // token1 = await pair.token1();
-        
-        // expect(token0).to.be.equal(tokenA.address);
-        // expect(token1).to.be.equal(tokenB.address);
+      
         expect(reserve0).to.equal(10000);
         expect(reserve1).to.equal(10000);
         
@@ -172,6 +159,7 @@ describe("Testing", () => {
          expect(reserve1).to.equal(10);
  })
 })
+//remove LIquidity starts here
 describe("removeLiquidity Testing",()=>{
     it("removing all liquidity",async()=>{
         await tokenA.connect(signer1).approve(router.address,10000);
@@ -339,10 +327,8 @@ describe("removeLiquidity Testing",()=>{
     liquidity_old = await _pair.balanceOf(owner.address);
     console.log("old liquidity tokens ",Number(liquidity_old));
     await _pair.approve(router.address,100000000000000)
-
+  
     await router.removeLiquidityETH(tokenA.address,liquidity_old,1,1,signer1.address,1659666362);
-
-    
     getReserves_new = await _pair.getReserves();
     reserve0_new = await getReserves_new._reserve0;
     reserve1_new = await getReserves_new._reserve1;
@@ -351,10 +337,10 @@ describe("removeLiquidity Testing",()=>{
 
     liquidity_new = await _pair.balanceOf(owner.address);
     console.log("new liquidity tokens ",Number(liquidity_new));
-    balanceOfUserA = await tokenA.balanceOf(signer1.address);
-    balanceOfUserB = await wETH.balanceOf(signer1.address);
+    // balanceOfUserA = await tokenA.balanceOf(signer1.address);
+    // balanceOfUserB = await ethers.provider.getBalance(signer1.address);
 
-    console.log(`balanceOfUserA${Number(balanceOfUserA)}, balanceOfUserB is ${Number(balanceOfUserB)}`);
+    // console.log(`--=========balanceOfUserA${Number(balanceOfUserA)}, balanceOfUserB is ${Number(balanceOfUserB)}`);
 
  })
  })
