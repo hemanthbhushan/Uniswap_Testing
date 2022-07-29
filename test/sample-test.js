@@ -26,6 +26,7 @@ describe("Testing", () => {
         const TokenD = await ethers.getContractFactory("TokenD");
         const WETH = await ethers.getContractFactory("WETH");
         const Factory = await ethers.getContractFactory("UniswapV2Factory");
+        const TaxableToken = await ethers.getContractFactory("DeflatingERC20");
         Pair = await ethers.getContractFactory("UniswapV2Pair");
         const LiquidityToken = await ethers.getContractFactory("UniswapV2ERC20");
 
@@ -42,6 +43,9 @@ describe("Testing", () => {
         await tokenD.deployed();
         wETH = await WETH.deploy();
         await wETH.deployed();
+
+        taxableToken = await TaxableToken.deploy(1000000000000000);
+        await taxableToken.deployed();
 
         pair = await Pair.deploy();
         await pair.deployed();
@@ -275,7 +279,7 @@ describe("removeLiquidity Testing",()=>{
     console.log("the new liquidity",convert(liquidityToken_new));
     // expect(userBalanceTOkenA_old).to.lessThan(Number(userBalanceTOkenA_new));
     // expect(userBalanceTOkenB_old).to.lessThan(userBalanceTOkenB_new);
-    // expect(liquidityToken).to.lessThan(liquidityToken_new );
+    expect(liquidityToken).to.lessThan(liquidityToken_new );
 
 
    
@@ -510,36 +514,87 @@ it("swap ETH for exact Tokens",async ()=>{
 })
 describe("swapping tokens extended",()=>{
   it("swap Exact Tokens For Tokens Supporting Fee On Transfer Tokens",async()=>{
-    await tokenA.approve(router.address,10000);
-    await tokenA.approve(router.address,10000);
+    await tokenA.approve(router.address,1000000);
+    await taxableToken.approve(router.address,1010000);
    
     
-    await router.addLiquidity(tokenA.address,tokenB.address,10000,10000,1,1,owner.address,1659666362);
+    await router.addLiquidity(tokenA.address,taxableToken.address,10000,1000000,1,1,owner.address,1659666362);
     
-    pairAddress = await factory.getPair(tokenA.address,tokenB.address);
+    pairAddress = await factory.getPair(tokenA.address,taxableToken.address);
     
-    _pair = await pair.attach(pairAddress);
+     _pair = await pair.attach(pairAddress);
 
     getReserves = await _pair.getReserves();
 
     reserve0_old = await getReserves._reserve0;
     reserve1_old = await getReserves._reserve1;
     
-    console.log(`the old reserve0 and reserve1 of the pool are  ${convert(reserve0_old)} ,${convert(reserve1_old)} `);
+    console.log(`the old reserve0 and reserve1 of the pool are  ${Number(reserve0_old)} ,${Number(reserve1_old)} `);
+    // expect()
    
-    router.swapExactTokensForTokensSupportingFeeOnTransferTokens(1000,11,[tokenA.address,tokenB.address],signer1.address,1659666362);
-    _pair = await pair.attach(pairAddress);
+   router.swapExactTokensForTokensSupportingFeeOnTransferTokens(10000,0,[tokenA.address,taxableToken.address],signer1.address,1659666362);
+    _pair1 = await pair.attach(pairAddress);
 
-    getReserves = await _pair.getReserves();
-     balanceOf = await tokenA.balanceOf(signer1.address);
-     console.log("user token A balance",Number(balanceOf));
+    getReserves = await _pair1.getReserves();
+     balanceOf = await taxableToken.balanceOf(signer1.address);
+     console.log("user taxable token balance",Number(balanceOf));
 
     reserve0_new = await getReserves._reserve0;
     reserve1_new = await getReserves._reserve1;
     
     console.log(`the new reserve0 and reserve1 of the pool are  ${convert(reserve0_new)} ,${convert(reserve1_new)} `);
-  }
-  )
+  })
+  it("swap Exact ETH For Tokens Supporting Fee On Transfer Tokens",async ()=>{
+    await taxableToken.approve(router.address,100000000);
+        transferAmount = ethers.utils.parseEther('0.00000000000001');
+        data = {value : transferAmount};
+
+    
+    await router.addLiquidityETH(taxableToken.address,1000000,0,0,owner.address,1699666362,data);
+         pairAddress = await factory.getPair(taxableToken.address,wETH.address);
+       const _pair = await pair.attach(pairAddress);
+        
+         getReserves = await _pair.getReserves();
+         reserve0 = await getReserves._reserve0;
+         reserve1 = await getReserves._reserve1;
+         console.log("reserve 0",Number(reserve0));
+         console.log("reserve 1",Number(reserve1));
+         transferAmount = ethers.utils.parseEther('0.0000000000000001');
+        data = {value : transferAmount};
+        router.swapExactETHForTokensSupportingFeeOnTransferTokens(1,[wETH.address,taxableToken],signer1.address,1699666362,data);
+        _pair1 = await pair.attach(pairAddress);
+         getReserves = await _pair1.getReserves();
+         reserve0_eth  = await  getReserves._reserve0;
+         reserve1_eth = await getReserves._reserve1;
+         console.log("reserv0_new ,reserve1_new",Number(reserve0_eth),Number(reserve1_eth));
+ })
+ it("swap Exact Tokens For ETH Supporting Fee On Transfer Tokens",async()=>{
+  await taxableToken.approve(router.address,1000000);
+  transferAmount = ethers.utils.parseEther('0.00000000000001');
+  data = {value : transferAmount};
+  await router.addLiquidityETH(taxableToken.address,1000000,0,0,owner.address,1699666362,data);
+  pairAddress = await factory.getPair(taxableToken.address,wETH.address);
+  const _pair = await pair.attach(pairAddress);
+ 
+  getReserves = await _pair.getReserves();
+  reserve0 = await getReserves._reserve0;
+  reserve1 = await getReserves._reserve1;
+  console.log("reserve 0",Number(reserve0));
+  console.log("reserve 1",Number(reserve1));
+  
+  router.swapExactTokensForETHSupportingFeeOnTransferTokens(10000,1,[taxableToken.address,wETH.address],signer1.address,1699666362);
+  _pair1 = await pair.attach(pairAddress);
+
+    getReserves = await _pair1.getReserves();
+     balanceOf = await taxableToken.balanceOf(signer1.address);
+     console.log("user taxable token balance",Number(balanceOf));
+
+    reserve0_new = await getReserves._reserve0;
+    reserve1_new = await getReserves._reserve1;
+    
+    console.log(`the new reserve0 and reserve1 of the pool are  ${Number(reserve0_new)} ,${Number(reserve1_new)} `);
+ })
+
 })
 
 
