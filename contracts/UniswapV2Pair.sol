@@ -73,6 +73,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     }
 
     // update reserves and, on the first call per block, price accumulators
+    // price0CumulativeLast it is used to get the pice of the token in the reserve 1 same with price1umulativeLast
     function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
         require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "UniswapV2: OVERFLOW");
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
@@ -89,7 +90,9 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     }
 
     // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
-    function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
+    //it will collect the fee of 0.025% that is 1/6 th of the 0.3 it is minted to the feeTo address it will get activated by the function call in the faction setFeeSetter etc
+//explained clearly in the white  of uniswap page no 5
+function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
         address feeTo = IUniswapV2Factory(factory).feeTo();
         feeOn = feeTo != address(0);
         uint _kLast = kLast; // gas savings
